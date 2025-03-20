@@ -1,35 +1,54 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect } from "react";
+import axios from "axios";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+declare global {
+  interface Window {
+    ymaps: any; // Определяем ymaps как глобальную переменную
+  }
 }
 
-export default App
+function App() {
+  useEffect(() => {
+    if (window.ymaps) {
+      window.ymaps.ready(init);
+    }
+
+    function init() {
+      // Создание карты.
+      const mapT = new window.ymaps.Map("map", {
+        // Координаты центра карты.
+        center: [53.902365, 27.561709],
+        controls: [],
+        // Уровень масштабирования.
+        zoom: 7,
+      });
+
+      axios
+        .get("https://test.acdn.by/api/v1/map/pharmacies")
+        .then((res) => {
+          // alert(JSON.stringify(res));
+          (res.data as { Coordinates: [string, string] }[]).map((p) => {
+            mapT.geoObjects.add(
+              new window.ymaps.Placemark(
+                p.Coordinates,
+                {
+                  balloonContent: "<strong>серобуромалиновый</strong> цвет",
+                },
+                {
+                  preset: "islands#dotIcon",
+                  iconColor: "#735184",
+                }
+              )
+            );
+          });
+        })
+        .catch((err) => {
+          alert(JSON.stringify(err));
+        });
+    }
+  }, []);
+
+  return <div id="map" className="flex flex-1"></div>;
+}
+
+export default App;
